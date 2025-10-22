@@ -2,121 +2,106 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-// Conexión (igual que en main.php)
-$servername = "localhost";
-$username = "root";
-$password = "1234";
-$dbname = "mysitedb";
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+// Conexión
+$conn = new mysqli("localhost", "root", "1234", "mysitedb");
 if ($conn->connect_error) {
     die("Conexión fallida: " . $conn->connect_error);
 }
 
-// Recoger ID del GET y validar
+// Validar el ID
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("ID no válido.");
 }
-
 $id = intval($_GET['id']);
 
-// Obtener datos del elemento (ejemplo: tabla tLibros)
-$sql_elemento = "SELECT * FROM tLibros WHERE id = ?";
-$stmt = $conn->prepare($sql_elemento);
-$stmt->bind_param("i", $id);
-$stmt->execute();
-$result_elemento = $stmt->get_result();
+// Procesar formulario si se envió
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $usuario = trim($_POST['usuario'] ?? '');
+    $comentario = trim($_POST['comentario'] ?? '');
 
-if ($result_elemento->num_rows === 0) {
-    die("Elemento no encontrado.");
+    if ($usuario === '' || $comentario === '') {
+        echo "<p style='color:red;'>Por favor, rellena todos los campos.</p>";
+    } else {
+        // Preparar sentencia para evitar SQL Injection
+        $stmt = $conn->prepare("INSERT INTO comentarios (elemento_id, usuario, comentario) VALUES (?, ?, ?)");
+        $stmt->bind_param("iss", $id, $usuario, $comentario);
+
+        if ($stmt->execute()) {
+            echo "<p style='color:green;'>Comentario añadido correctamente.</p>";
+        } else {
+            echo "<p style='color:red;'>Error al añadir comentario: " . $conn->error . "</p>";
+        }
+        $stmt->close();
+    }
 }
 
-$elemento = $result_elemento->fetch_assoc();
+// Obtener elemento
+$sql = "SELECT * FROM tLibros WHERE id = $id";
+$result = $conn->query($sql);
 
-// Obtener comentarios asociados
-$sql_comentarios = "SELECT * FROM comentarios WHERE elemento_id = ? ORDER BY fecha DESC";
-$stmt2 = $conn->prepare($sql_comentarios);
-$stmt2->bind_param("i", $id);
-$stmt2->execute();
-$result_comentarios = $stmt2->get_result();
+if ($result->num_rows === 0) {
+    die("Elemento no encontrado.");
+}
+$elemento = $result->fetch_assoc();
+
+// Obtener comentarios
+$sqlComentarios = "SELECT * FROM comentarios WHERE elemento_id = $id ORDER BY fecha DESC";
+$comentarios = $conn->query($sqlComentarios);
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Detalle del elemento</title>
     <style>
-        img {
-            max-width: 300px;
-            height: auto;
-            object-fit: cover;
-            margin-bottom: 20px;
-        }
-        .atributo {
-            margin-bottom: 10px;
-        }
-        .comentarios {
-            margin-top: 40px;
-            border-top: 1px solid #ccc;
-            padding-top: 20px;
-        }
-        .comentario {
-            border-bottom: 1px solid #ddd;
-            padding: 10px 0;
-        }
-        .comentario:last-child {
-            border-bottom: none;
-        }
-        .usuario {
-            font-weight: bold;
-        }
-        .fecha {
-            font-size: 0.9em;
-            color: gray;
-        }
+        img { max-width: 200px; height: auto; }
+        form { margin-top: 20px; }
+        label { display: block; margin-top: 10px; }
+        textarea { width: 300px; height: 100px; }
+        input[type="text"] { width: 300px; }
+        .comentario { border-bottom: 1px solid #ccc; padding: 10px 0; }
     </style>
 </head>
 <body>
     <h1>Detalle del elemento</h1>
 
-    <!-- Mostrar imagen -->
     <?php if (!empty($elemento['imagen'])): ?>
-        <img src="<?php echo htmlspecialchars($elemento['imagen']); ?>" alt="Imagen del elemento">
-    <?php else: ?>
-        <p><em>No hay imagen disponible.</em></p>
+        <img src="<?php echo htmlspecialchars($elemento['imagen']); ?>" alt="Imagen">
     <?php endif; ?>
 
-    <!-- Mostrar atributos -->
-    <div>
-        <?php foreach ($elemento as $clave => $valor): ?>
-            <?php if ($clave !== 'imagen'): ?>
-                <div class="atributo"><strong><?php echo htmlspecialchars($clave); ?>:</strong> <?php echo htmlspecialchars($valor); ?></div>
-            <?php endif; ?>
-        <?php endforeach; ?>
-    </div>
+    <?php foreach ($elemento as $clave => $valor): ?>
+        <p><strong><?php echo htmlspecialchars($clave); ?>:</strong> <?php echo htmlspecialchars($valor); ?></p>
+    <?php endforeach; ?>
 
-    <!-- Comentarios -->
-    <div class="comentarios">
-        <h2>Comentarios</h2>
-        <?php if ($result_comentarios->num_rows > 0): ?>
-            <?php while ($comentario = $result_comentarios->fetch_assoc()): ?>
-                <div class="comentario">
-                    <div class="usuario"><?php echo htmlspecialchars($comentario['usuario']); ?></div>
-                    <div class="fecha"><?php echo htmlspecialchars($comentario['fecha']); ?></div>
-                    <div class="texto"><?php echo nl2br(htmlspecialchars($comentario['comentario'])); ?></div>
-                </div>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <p>No hay comentarios para este elemento.</p>
-        <?php endif; ?>
-    </div>
+    <h2>Comentarios</h2>
+    <?php if ($comentarios->num_rows > 0): ?>
+        <?php while ($comentario = $comentarios->fetch_assoc()): ?>
+            <div class="comentario">
+                <strong><?php echo htmlspecialchars($comentario['usuario']); ?></strong> (<?php echo $comentario['fecha']; ?>):
+                <p><?php echo nl2br(htmlspecialchars($comentario['comentario'])); ?></p>
+            </div>
+        <?php endwhile; ?>
+    <?php else: ?>
+        <p>No hay comentarios.</p>
+    <?php endif; ?>
 
+    <h2>Nuevo comentario</h2>
+    <form method="post" action="">
+        <label for="usuario">Nombre:</label>
+        <input type="text" id="usuario" name="usuario" required>
+
+        <label for="comentario">Comentario:</label>
+        <textarea id="comentario" name="comentario" required></textarea>
+
+        <br>
+        <button type="submit">Enviar comentario</button>
+    </form>
 </body>
 </html>
 
 <?php
-$stmt->close();
-$stmt2->close();
 $conn->close();
 ?>
+
