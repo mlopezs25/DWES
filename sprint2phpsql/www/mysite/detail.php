@@ -28,7 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param("iss", $id, $usuario, $comentario);
 
         if ($stmt->execute()) {
-            echo "<p style='color:green;'>Comentario añadido correctamente.</p>";
+            // Redirigir para evitar reenvío del formulario
+            header("Location: " . $_SERVER['PHP_SELF'] . "?id=" . $id);
+            exit;
         } else {
             echo "<p style='color:red;'>Error al añadir comentario: " . $conn->error . "</p>";
         }
@@ -79,7 +81,8 @@ $comentarios = $conn->query($sqlComentarios);
     <?php if ($comentarios->num_rows > 0): ?>
         <?php while ($comentario = $comentarios->fetch_assoc()): ?>
             <div class="comentario">
-                <strong><?php echo htmlspecialchars($comentario['usuario']); ?></strong> (<?php echo $comentario['fecha']; ?>):
+                <strong><?php echo htmlspecialchars($comentario['usuario']); ?></strong> 
+                (<?php echo htmlspecialchars($comentario['fecha']); ?>):
                 <p><?php echo nl2br(htmlspecialchars($comentario['comentario'])); ?></p>
             </div>
         <?php endwhile; ?>
