@@ -3,27 +3,28 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Conexión
-$conn = new mysqli("localhost", "root", "1234", "mysitedb");
+// Conexión a la base de datos
+$conn = new mysqli("localhost", "manuel", "1234", "mysitedb");
 if ($conn->connect_error) {
     die("Conexión fallida: " . $conn->connect_error);
 }
 
-// Validar el ID
+// Validar el ID del libro
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("ID no válido.");
 }
 $id = intval($_GET['id']);
 
-// Procesar formulario si se envió
+// Procesar el formulario si se envió
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usuario = trim($_POST['usuario'] ?? '');
     $comentario = trim($_POST['comentario'] ?? '');
 
+    // Verificar que los campos no estén vacíos
     if ($usuario === '' || $comentario === '') {
         echo "<p style='color:red;'>Por favor, rellena todos los campos.</p>";
     } else {
-        // Preparar sentencia para evitar SQL Injection
+        // Preparar la sentencia SQL para evitar inyecciones SQL
         $stmt = $conn->prepare("INSERT INTO comentarios (elemento_id, usuario, comentario) VALUES (?, ?, ?)");
         $stmt->bind_param("iss", $id, $usuario, $comentario);
 
@@ -38,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Obtener elemento
+// Obtener los detalles del libro
 $sql = "SELECT * FROM tLibros WHERE id = $id";
 $result = $conn->query($sql);
 
@@ -47,8 +48,12 @@ if ($result->num_rows === 0) {
 }
 $elemento = $result->fetch_assoc();
 
-// Obtener comentarios
-$sqlComentarios = "SELECT * FROM comentarios WHERE elemento_id = $id ORDER BY fecha DESC";
+// Obtener los comentarios junto con el nombre del usuario
+$sqlComentarios = "
+    SELECT c.comentario, c.fecha, c.usuario 
+    FROM comentarios c 
+    WHERE c.elemento_id = $id 
+    ORDER BY c.fecha DESC";
 $comentarios = $conn->query($sqlComentarios);
 ?>
 
@@ -56,7 +61,7 @@ $comentarios = $conn->query($sqlComentarios);
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Detalle del elemento</title>
+    <title>Detalle del libro</title>
     <style>
         img { max-width: 200px; height: auto; }
         form { margin-top: 20px; }
@@ -67,15 +72,15 @@ $comentarios = $conn->query($sqlComentarios);
     </style>
 </head>
 <body>
-    <h1>Detalle del elemento</h1>
+    <h1>Detalle del libro</h1>
 
-    <?php if (!empty($elemento['imagen'])): ?>
-        <img src="<?php echo htmlspecialchars($elemento['imagen']); ?>" alt="Imagen">
+    <?php if (!empty($elemento['url_imagen'])): ?>
+        <img src="<?php echo htmlspecialchars($elemento['url_imagen']); ?>" alt="Imagen">
     <?php endif; ?>
 
-    <?php foreach ($elemento as $clave => $valor): ?>
-        <p><strong><?php echo htmlspecialchars($clave); ?>:</strong> <?php echo htmlspecialchars($valor); ?></p>
-    <?php endforeach; ?>
+    <h2><?php echo htmlspecialchars($elemento['nombre']); ?></h2>
+    <p><strong>Autor:</strong> <?php echo htmlspecialchars($elemento['autor']); ?></p>
+    <p><strong>Año de publicación:</strong> <?php echo htmlspecialchars($elemento['anio_publicacion']); ?></p>
 
     <h2>Comentarios</h2>
     <?php if ($comentarios->num_rows > 0): ?>
