@@ -1,4 +1,5 @@
 <?php
+session_start();
 $servername = "localhost";
 $username = "root";
 $password = "1234"; // La contraseña de root que configuraste
@@ -9,7 +10,6 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Conexión fallida: " . $conn->connect_error);
 }
-// Ya no echo el mensaje de conexión, para que no aparezca en la página
 ?>
 
 <!DOCTYPE html>
@@ -37,12 +37,25 @@ if ($conn->connect_error) {
         .container {
             overflow: hidden; /* Para limpiar floats */
         }
+        .logout {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>Catálogo</h1>
-    <div class="container">
 
+    <!-- Mostrar mensaje de bienvenida si el usuario está logueado -->
+    <div class="logout">
+        <?php if (isset($_SESSION['nombre_usuario'])): ?>
+            <p>¡Hola, <?php echo htmlspecialchars($_SESSION['nombre_usuario']); ?>! 
+               <a href="logout.php">Cerrar sesión</a></p>
+        <?php else: ?>
+            <p><a href="login.html">Iniciar sesión</a></p>
+        <?php endif; ?>
+    </div>
+
+    <div class="container">
     <?php
     // Puedes repetir este bloque para otras tablas
     $tabla = "tLibros"; // Cambia a tJuegos, tOtraTabla, etc.
@@ -77,8 +90,8 @@ if ($conn->connect_error) {
 
     $conn->close();
     ?>
-
     </div>
 </body>
 </html>
+
 

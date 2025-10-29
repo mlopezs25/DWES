@@ -1,10 +1,11 @@
 <?php
-session_start();
+session_start(); // Inicia la sesión
 
+// Conexión a la base de datos
 $servername = "localhost";
-$username = "manuel";
-$password = "1234";
-$dbname = "mysitedb";
+$username = "root";
+$password = "1234"; // Tu contraseña de la base de datos
+$dbname = "mysitedb"; // Nombre de tu base de datos
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -20,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST['f_password'];
 
     // Comprobar si el email existe en la base de datos
-    $sql = "SELECT * FROM usuarios WHERE email = ?";
+    $sql = "SELECT * FROM tUsuarios WHERE email = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -29,14 +30,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result->num_rows > 0) {
         // El usuario existe, verificar la contraseña
         $row = $result->fetch_assoc();
-        $hashed_password = $row['password']; // Suponemos que la contraseña está hasheada en la base de datos
+        $hashed_password = $row['contraseña']; // Suponemos que la contraseña está hasheada en la base de datos
 
         // Verificar la contraseña con password_verify
         if (password_verify($password, $hashed_password)) {
             // La contraseña es correcta, redirigir a la página principal
-            $_SESSION['email'] = $email;  // Guardamos el email en la sesión
-            header("Location: main.php");  // Redirigir a la página principal
-            exit();
+            $_SESSION['user_id'] = $row['id']; // Guardamos el ID del usuario en la sesión
+            $_SESSION['nombre'] = $row['nombre']; // Guardamos el nombre del usuario en la sesión
+            $_SESSION['email'] = $email;  // También guardamos el email, si es necesario
+
+            // Redirigir a la página principal (main.php)
+            header("Location: main.php"); 
+            exit(); // Aseguramos que no se ejecute más código
         } else {
             // Contraseña incorrecta
             echo "<p>Contraseña incorrecta. Intenta de nuevo.</p>";
@@ -50,19 +55,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 $conn->close();
 ?>
 
-<!-- HTML del formulario de login (podrías separarlo en un archivo aparte si quieres) -->
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Login</title>
-</head>
-<body>
-    <h1>Login</h1>
-    <form action="login.php" method="post">
-        <input name="f_email" type="email" placeholder="e-mail" required><br>
-        <input name="f_password" type="password" placeholder="Contraseña" required><br>
-        <input type="submit" value="Iniciar sesión">
-    </form>
-</body>
-</html>
+

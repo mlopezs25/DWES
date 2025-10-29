@@ -1,7 +1,10 @@
-<?php
+<<?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
+// Iniciar sesión
+session_start();
 
 // Conexión a la base de datos
 $conn = new mysqli("localhost", "manuel", "1234", "mysitedb");
@@ -17,7 +20,13 @@ $id = intval($_GET['id']);
 
 // Procesar el formulario si se envió
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $usuario = trim($_POST['usuario'] ?? '');
+    // Usar el nombre de usuario de sesión si está logueado
+    if (isset($_SESSION['nombre_usuario'])) {
+        $usuario = $_SESSION['nombre_usuario'];
+    } else {
+        $usuario = trim($_POST['usuario'] ?? '');
+    }
+
     $comentario = trim($_POST['comentario'] ?? '');
 
     // Verificar que los campos no estén vacíos
@@ -48,12 +57,12 @@ if ($result->num_rows === 0) {
 }
 $elemento = $result->fetch_assoc();
 
-// Obtener los comentarios junto con el nombre del usuario
+// Obtener los comentarios
 $sqlComentarios = "
-    SELECT c.comentario, c.fecha, c.usuario 
-    FROM comentarios c 
-    WHERE c.elemento_id = $id 
-    ORDER BY c.fecha DESC";
+    SELECT comentario, fecha, usuario 
+    FROM comentarios 
+    WHERE elemento_id = $id 
+    ORDER BY fecha DESC";
 $comentarios = $conn->query($sqlComentarios);
 ?>
 
@@ -69,9 +78,19 @@ $comentarios = $conn->query($sqlComentarios);
         textarea { width: 300px; height: 100px; }
         input[type="text"] { width: 300px; }
         .comentario { border-bottom: 1px solid #ccc; padding: 10px 0; }
+        .logout { margin-bottom: 20px; }
     </style>
 </head>
 <body>
+    <div class="logout">
+        <?php if (isset($_SESSION['nombre_usuario'])): ?>
+            <p>¡Hola, <?php echo htmlspecialchars($_SESSION['nombre_usuario']); ?>! 
+               <a href="logout.php">Cerrar sesión</a></p>
+        <?php else: ?>
+            <p><a href="login.html">Iniciar sesión</a></p>
+        <?php endif; ?>
+    </div>
+
     <h1>Detalle del libro</h1>
 
     <?php if (!empty($elemento['url_imagen'])): ?>
@@ -97,8 +116,10 @@ $comentarios = $conn->query($sqlComentarios);
 
     <h2>Nuevo comentario</h2>
     <form method="post" action="">
-        <label for="usuario">Nombre:</label>
-        <input type="text" id="usuario" name="usuario" required>
+        <?php if (!isset($_SESSION['nombre_usuario'])): ?>
+            <label for="usuario">Nombre:</label>
+            <input type="text" id="usuario" name="usuario" required>
+        <?php endif; ?>
 
         <label for="comentario">Comentario:</label>
         <textarea id="comentario" name="comentario" required></textarea>
