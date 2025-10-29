@@ -18,6 +18,18 @@ if ($conn->connect_error) {
     <meta charset="UTF-8" />
     <title>Catálogo</title>
     <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding-top: 30px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
         .card {
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -27,18 +39,50 @@ if ($conn->connect_error) {
             text-align: center;
             float: left;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
         }
+
         img {
             width: 150px;
             height: 200px;
             object-fit: cover;
             margin-bottom: 10px;
         }
+
         .container {
-            overflow: hidden; /* Para limpiar floats */
+            overflow: hidden; /* Para limpiar los floats */
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
         }
+
         .logout {
             margin-bottom: 20px;
+        }
+
+        /* Efecto de hover */
+        .card:hover {
+            opacity: 1;
+            transform: translateY(0) scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Animación de fade-in al cargar */
+        .container .card {
+            animation: fadeIn 0.8s forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
@@ -93,5 +137,4 @@ if ($conn->connect_error) {
     </div>
 </body>
 </html>
-
 
