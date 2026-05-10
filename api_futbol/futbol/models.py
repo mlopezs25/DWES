@@ -44,6 +44,8 @@ class Partido(models.Model):
     equipo_local = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name="local")
     equipo_visitante = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name="visitante")
 
+    jugadores = models.ManyToManyField(Jugador, blank=True)
+
     class Meta:
         ordering = ['fecha']
         verbose_name = 'Partido'
@@ -66,4 +68,11 @@ class Alineacion(models.Model):
 
     def __str__(self):
         return f"{self.jugador} en {self.partido}"
+
+class Entrenador(models.Model):
+    nombre = models.CharField(max_length=100)
+
+class PerfilEntrenador(models.Model):
+    entrenador = models.OneToOneField(Entrenador, on_delete=models.CASCADE)
+    nacionalidad = models.CharField(max_length=100)
 
