@@ -12,7 +12,8 @@ from .serializers import (
     PartidoSerializer,
     AlineacionSerializer,
     PosicionSerializer,
-    AgregarJugadorSerializer
+    AgregarJugadorSerializer,
+    PartidoDetalleSerializer,
 )
 
 
@@ -40,7 +41,12 @@ class JugadorViewSet(ModelViewSet):
 
 class PartidoViewSet(ModelViewSet):
     queryset = Partido.objects.all()
-    serializer_class = PartidoSerializer
+
+    def get_serializer_class(self):
+        if self.action in ['retrieve', 'list']:
+            from .serializers import PartidoDetalleSerializer
+            return PartidoDetalleSerializer
+        return PartidoSerializer
 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = PartidoFilter
@@ -57,28 +63,21 @@ class PartidoViewSet(ModelViewSet):
 
         jugador_id = serializer.validated_data['jugador_id']
         minutos = serializer.validated_data['minutos']
+        goles = serializer.validated_data.get('goles', 0)
 
-        # Validar jugador
         try:
             jugador = Jugador.objects.get(id=jugador_id)
         except Jugador.DoesNotExist:
-            return Response(
-                {"error": "Jugador no existe"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Jugador no existe"}, status=400)
 
-        # Crear alineación o detectar duplicado
         alineacion, creada = Alineacion.objects.get_or_create(
             partido=partido,
             jugador=jugador,
-            defaults={'minutos_jugados': minutos}
+            defaults={'minutos': minutos, 'goles': goles}
         )
 
         if not creada:
-            return Response(
-                {"error": "El jugador ya está en la alineación"},
-                status=status.HTTP_409_CONFLICT
-            )
+            return Response({"error": "El jugador ya está en la alineación"}, status=409)
 
         return Response(
             {"mensaje": "Jugador añadido correctamente"},
@@ -93,15 +92,16 @@ class AlineacionViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['jugador', 'partido']
     search_fields = ['jugador__nombre']
-    ordering_fields = ['minutos_jugados', 'goles']
-    ordering = ['-minutos_jugados']
+    ordering_fields = ['minutos', 'goles']
+    ordering = ['-minutos']
+
 
 
 class PosicionViewSet(ModelViewSet):
     queryset = Posicion.objects.all()
     serializer_class = PosicionSerializer
 
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends= [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['nombre']
     ordering_fields = ['nombre']
     ordering = ['nombre']

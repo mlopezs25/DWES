@@ -44,7 +44,7 @@ class Partido(models.Model):
     equipo_local = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name="local")
     equipo_visitante = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name="visitante")
 
-    jugadores = models.ManyToManyField(Jugador, blank=True)
+    jugadores = models.ManyToManyField(Jugador, through="Alineacion", blank=True)
 
     class Meta:
         ordering = ['fecha']
@@ -57,7 +57,7 @@ class Partido(models.Model):
 class Alineacion(models.Model):
     jugador = models.ForeignKey(Jugador, on_delete=models.CASCADE)
     partido = models.ForeignKey(Partido, on_delete=models.CASCADE)
-    minutos_jugados = models.IntegerField(default=0)
+    minutos = models.IntegerField(default=0)
     goles = models.IntegerField(default=0)
 
     class Meta:

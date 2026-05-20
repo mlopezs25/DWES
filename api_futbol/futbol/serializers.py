@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Equipo, Jugador, Alineacion, Partido, PerfilEntrenador, Entrenador, Posicion
 
+
 class EquipoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Equipo
@@ -19,13 +20,23 @@ class JugadorSerializer(serializers.ModelSerializer):
 class AlineacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Alineacion
-        fields = ['id', 'partido', 'jugador', 'minutos']
+        fields = ['id', 'partido', 'jugador', 'minutos', 'goles']
 
 
 class PartidoSerializer(serializers.ModelSerializer):
+    """Para crear partidos (sin jugadores)."""
     class Meta:
         model = Partido
         fields = '__all__'
+
+
+class PartidoDetalleSerializer(serializers.ModelSerializer):
+    """Para mostrar un partido con sus alineaciones."""
+    alineaciones = AlineacionSerializer(source='alineacion_set', many=True, read_only=True)
+
+    class Meta:
+        model = Partido
+        fields = ['id', 'fecha', 'equipo_local', 'equipo_visitante', 'alineaciones']
 
 
 class PerfilEntrenadorSerializer(serializers.ModelSerializer):
@@ -47,8 +58,10 @@ class PosicionSerializer(serializers.ModelSerializer):
         model = Posicion
         fields = '__all__'
 
+
 class AgregarJugadorSerializer(serializers.Serializer):
     jugador_id = serializers.IntegerField()
     minutos = serializers.IntegerField(required=False, default=90)
+    goles = serializers.IntegerField(required=False, default=0)
 
 
