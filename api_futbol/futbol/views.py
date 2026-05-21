@@ -4,6 +4,8 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+
 from .filters import PartidoFilter
 from .models import Equipo, Jugador, Partido, Alineacion, Posicion
 from .serializers import (
@@ -16,7 +18,6 @@ from .serializers import (
     PartidoDetalleSerializer,
 )
 
-
 class EquipoViewSet(ModelViewSet):
     queryset = Equipo.objects.all()
     serializer_class = EquipoSerializer
@@ -26,6 +27,11 @@ class EquipoViewSet(ModelViewSet):
     search_fields = ['nombre', 'ciudad']
     ordering_fields = ['nombre', 'ciudad']
     ordering = ['nombre']
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
 
 class JugadorViewSet(ModelViewSet):
@@ -38,13 +44,17 @@ class JugadorViewSet(ModelViewSet):
     ordering_fields = ['dorsal', 'nombre']
     ordering = ['dorsal']
 
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
 
 class PartidoViewSet(ModelViewSet):
     queryset = Partido.objects.all()
 
     def get_serializer_class(self):
         if self.action in ['retrieve', 'list']:
-            from .serializers import PartidoDetalleSerializer
             return PartidoDetalleSerializer
         return PartidoSerializer
 
@@ -54,7 +64,16 @@ class PartidoViewSet(ModelViewSet):
     ordering_fields = ['fecha']
     ordering = ['fecha']
 
-    @action(detail=True, methods=['post'])
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    @action(
+        detail=True,
+        methods=['post'],
+        permission_classes=[IsAuthenticated]
+    )
     def agregar_jugador(self, request, pk=None):
         partido = self.get_object()
 
@@ -95,15 +114,25 @@ class AlineacionViewSet(ModelViewSet):
     ordering_fields = ['minutos', 'goles']
     ordering = ['-minutos']
 
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
 
 class PosicionViewSet(ModelViewSet):
     queryset = Posicion.objects.all()
     serializer_class = PosicionSerializer
 
-    filter_backends= [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['nombre']
     ordering_fields = ['nombre']
     ordering = ['nombre']
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
 
 
