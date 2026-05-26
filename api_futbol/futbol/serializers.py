@@ -65,3 +65,6 @@ class AgregarJugadorSerializer(serializers.Serializer):
     goles = serializers.IntegerField(required=False, default=0)
 
 
+
+
+

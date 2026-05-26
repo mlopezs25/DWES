@@ -15,7 +15,7 @@ from .serializers import (
     AlineacionSerializer,
     PosicionSerializer,
     AgregarJugadorSerializer,
-    PartidoDetalleSerializer,
+    PartidoDetalleSerializer
 )
 
 class EquipoViewSet(ModelViewSet):
@@ -48,6 +48,8 @@ class JugadorViewSet(ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return [IsAuthenticated()]
+
+
 
 
 class PartidoViewSet(ModelViewSet):

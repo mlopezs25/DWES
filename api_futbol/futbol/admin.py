@@ -8,3 +8,4 @@ admin.site.register(Partido)
 admin.site.register(Alineacion)
 
 
+

@@ -76,3 +76,6 @@ class PerfilEntrenador(models.Model):
     entrenador = models.OneToOneField(Entrenador, on_delete=models.CASCADE)
     nacionalidad = models.CharField(max_length=100)
 
+
+
+
